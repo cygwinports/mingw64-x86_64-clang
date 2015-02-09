@@ -1,0 +1,58 @@
+--- origsrc/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2015-02-08 16:59:11.923895700 -0600
++++ src/llvm-3.4.2.src/tools/clang/lib/Frontend/InitHeaderSearch.cpp	2015-02-04 00:10:11.105287100 -0600
+@@ -200,11 +200,11 @@ void InitHeaderSearch::AddGnuCPlusPlusIn
+ void InitHeaderSearch::AddMinGWCPlusPlusIncludePaths(StringRef Base,
+                                                      StringRef Arch,
+                                                      StringRef Version) {
+-  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++",
++  AddUnmappedPath(Base + "/" + Arch + "/" + Version + "/include/c++",
+           CXXSystem, false);
+-  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
++  AddUnmappedPath(Base + "/" + Arch + "/" + Version + "/include/c++/" + Arch,
+           CXXSystem, false);
+-  AddPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
++  AddUnmappedPath(Base + "/" + Arch + "/" + Version + "/include/c++/backward",
+           CXXSystem, false);
+ }
+ 
+@@ -262,7 +262,7 @@ void InitHeaderSearch::AddDefaultCInclud
+     for (SmallVectorImpl<StringRef>::iterator i = dirs.begin();
+          i != dirs.end();
+          ++i)
+-      AddPath(*i, ExternCSystem, false);
++      AddUnmappedPath(*i, ExternCSystem, false);
+     return;
+   }
+ 
+@@ -393,18 +393,12 @@ AddDefaultCPlusPlusIncludePaths(const ll
+     // g++-4 / Cygwin-1.5
+     AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", "i686-pc-cygwin", "4.3.2");
+     break;
+-  case llvm::Triple::MinGW32:
++  case llvm::Triple::MinGW32: {
++    std::string arch = triple.getArch() == llvm::Triple::x86_64 ? "x86_64" : "i686";
+     // mingw-w64 C++ include paths (i686-w64-mingw32 and x86_64-w64-mingw32)
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.0");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.1");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.2");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.3");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.5.4");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.0");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.1");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.2");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.6.3");
+-    AddMinGW64CXXPaths(HSOpts.ResourceDir, "4.7.0");
++    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-w64-mingw32", "4.9.3");
++    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-w64-mingw32", "4.9.2");
++    AddMinGWCPlusPlusIncludePaths("/usr/lib/gcc", arch + "-w64-mingw32", "4.8.3");
+     // mingw.org C++ include paths
+     AddMinGWCPlusPlusIncludePaths("/mingw/lib/gcc", "mingw32", "4.5.2"); //MSYS
+ #if defined(_WIN32)
+@@ -417,6 +411,7 @@ AddDefaultCPlusPlusIncludePaths(const ll
+     AddMinGWCPlusPlusIncludePaths("c:/MinGW/lib/gcc", "mingw32", "4.3.0");
+ #endif
+     break;
++  }
+   case llvm::Triple::DragonFly:
+     if (llvm::sys::fs::exists("/usr/lib/gcc47"))
+       AddPath("/usr/include/c++/4.7", CXXSystem, false);

@@ -1,0 +1,60 @@
+# IMPORTANT:
+# This package MUST be rebuilt for each version of mingw64-x86_64-gcc, and the
+# cygwin-clang patch fixed accordingly.
+
+TOOLCHAIN_TARGET="x86_64-w64-mingw32"
+inherit toolchain
+
+NAME="mingw64-x86_64-clang"
+VERSION=3.4.2
+RELEASE=1
+CATEGORY="Libs"
+SUMMARY="Clang cross-compiler for Win64 toolchain"
+DESCRIPTION="The LLVM Core libraries provide a modern source- and target-
+independent optimizer, along with code generation support for many popular CPUs
+(as well as some less common ones!) These libraries are built around a well
+specified code representation known as the LLVM intermediate representation."
+HOMEPAGE="http://www.llvm.org/"
+SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.gz"
+SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.gz"
+SRC_DIR="llvm-${VERSION}.src"
+PATCH_URI="3.4.2-mingw-gcc.patch"
+
+REQUIRES="mingw64-x86_64-gcc-core mingw64-x86_64-gcc-g++"
+
+CYGPORT_USE_UNSTABLE_API=1
+src_unpack_hook() {
+	rm -fr tools/clang
+	mv ../cfe-${VERSION}.src tools/clang
+}
+
+src_compile() {
+	# leave optimization to build system, fails to dlopen with -O2
+	CFLAGS=${CFLAGS/-O[0-9]/}
+	CXXFLAGS=${CXXFLAGS/-O[0-9]/}
+
+	local gccdir=/usr/lib/gcc/${TOOLCHAIN_TARGET}/$(${TOOLCHAIN_TARGET}-gcc -dumpversion)
+
+	cd ${B}
+	cygconf --target=${TOOLCHAIN_TARGET} \
+		 --disable-assertions --enable-optimized --enable-debug-runtime \
+		--enable-debug-symbols --enable-targets=x86,cpp \
+		--enable-libffi --disable-shared --disable-embed-stdcxx \
+		--disable-polly --disable-libcpp --enable-bindings=none \
+		--with-gcc-toolchain=/usr --with-default-sysroot=${TOOLCHAIN_SYSROOT} \
+		--with-clang-resource-dir=../lib/clang/${TOOLCHAIN_TARGET}/${VERSION} \
+		--with-c-include-dirs=${gccdir}/include:${TOOLCHAIN_INCLUDEDIR}
+
+	cygmake clang-only REQUIRES_RTTI=1
+	cygmake -C tools/clang/docs/tools man
+}
+
+src_install() {
+	cd ${B}
+	cyginstall -C tools/clang/lib/Headers \
+		PROJ_headers=${D}/usr/lib/clang/${TOOLCHAIN_TARGET}/${VERSION}/include
+
+	newbin Release+Debug/bin/clang.exe ${TOOLCHAIN_TARGET}-clang.exe
+	dosym ${TOOLCHAIN_TARGET}-clang.exe /usr/bin/${TOOLCHAIN_TARGET}-clang++
+	newman tools/clang/docs/tools/clang.1 ${TOOLCHAIN_TARGET}-clang.1
+}
