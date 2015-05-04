@@ -6,7 +6,7 @@ TOOLCHAIN_TARGET="x86_64-w64-mingw32"
 inherit toolchain
 
 NAME="mingw64-x86_64-clang"
-VERSION=3.4.2
+VERSION=3.5.1
 RELEASE=1
 CATEGORY="Libs"
 SUMMARY="Clang cross-compiler for Win64 toolchain"
@@ -15,10 +15,10 @@ independent optimizer, along with code generation support for many popular CPUs
 (as well as some less common ones!) These libraries are built around a well
 specified code representation known as the LLVM intermediate representation."
 HOMEPAGE="http://www.llvm.org/"
-SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.gz"
-SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.gz"
+SRC_URI="http://www.llvm.org/releases/${VERSION}/llvm-${VERSION}.src.tar.xz"
+SRC_URI+=" http://www.llvm.org/releases/${VERSION}/cfe-${VERSION}.src.tar.xz"
 SRC_DIR="llvm-${VERSION}.src"
-PATCH_URI="3.4.2-mingw-gcc.patch"
+PATCH_URI="3.5.1-mingw-gcc.patch"
 
 REQUIRES="mingw64-x86_64-gcc-core mingw64-x86_64-gcc-g++"
 
